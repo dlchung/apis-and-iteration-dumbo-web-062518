@@ -2,18 +2,29 @@ require 'rest-client'
 require 'json'
 require 'pry'
 
-def get_character_movies_from_api(character= nil)
+def web_request
   #make the web request
   all_characters = RestClient.get('http://www.swapi.co/api/people/')
-  character_hash = JSON.parse(all_characters)
+end
 
-  result = character_hash.fetch("results")
+def parse_data
+  character_hash = JSON.parse(web_request)
+end
+
+def get_results
+  result = parse_data.fetch("results")
+end
+
+def get_films(character)
   # iterate over the character hash to find the collection of `films` for the given
   #   `character`
-  character_films = result.find {|character_hash| character_hash["name"] == character}["films"]
+  character_films = get_results.find {|character_hash| character_hash["name"].downcase == character.downcase}["films"]
+end
+
+def request_film_data(character)
   # collect those film API urls, make a web request to each URL to get the info
   #  for that film
-  character_films.map {|film_url| JSON.parse(RestClient.get(film_url))}
+  get_films(character).map {|film_url| JSON.parse(RestClient.get(film_url))}
 
   # return value of this method should be collection of info about each film.
   #  i.e. an array of hashes in which each hash reps a given film
@@ -22,18 +33,12 @@ def get_character_movies_from_api(character= nil)
   #  of movies by title. play around with puts out other info about a given film.
 end
 
-def parse_character_movies(films_hash)
-  # some iteration magic and puts out the movies in a nice list
-  films_hash.each {|film_hash|
-    puts film_hash["title"]}
-end
-
 def show_character_movies(character)
-  films_hash = get_character_movies_from_api(character)
-  parse_character_movies(films_hash)
+  # some iteration magic and puts out the movies in a nice list
+  # films_hash = get_character_movies_from_api(character)
+  request_film_data(character).each {|film_hash| puts film_hash["title"]}
 end
 
-show_character_movies("Luke Skywalker")
 ## BONUS
 
 # that `get_character_movies_from_api` method is probably pretty long. Does it do more than one job?
